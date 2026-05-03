@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { Send, Mic, MicOff, Video, VideoOff, PhoneOff, ArrowRight } from 'lucide-react';
 
-const SERVER_URL = 'https://book-worry-equipment.ngrok-free.dev';
+const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'https://book-worry-equipment.ngrok-free.dev';
 
 export default function App() {
   const [step, setStep] = useState('setup'); // 'setup', 'searching', 'chatting'
