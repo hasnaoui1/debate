@@ -75,7 +75,8 @@ button {
 .logo {
   font-size: 28px;
   font-weight: 800;
-  background: linear-gradient(135deg, #f72585, #4cc9f0);
+  background: linear-gradient(135deg, var(--accent-color), #4cc9f0);
+  background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   letter-spacing: -0.03em;
@@ -280,7 +281,7 @@ button {
 .videos-panel {
   flex: 2;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   padding: 20px;
   gap: 20px;
   position: relative;
@@ -364,6 +365,37 @@ button {
 .control-btn.danger:hover {
   background: var(--accent-color);
   color: white;
+}
+
+.control-btn.warning {
+  background: rgba(255, 170, 0, 0.2);
+  color: #ffaa00;
+  border-color: rgba(255, 170, 0, 0.5);
+}
+
+.control-btn.warning:hover {
+  background: #ffaa00;
+  color: white;
+}
+
+.toast-notification {
+  position: absolute;
+  top: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--accent-color);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  z-index: 50;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+  animation: slideDownFade 0.3s ease-out;
+}
+
+@keyframes slideDownFade {
+  from { top: 0px; opacity: 0; }
+  to { top: 40px; opacity: 1; }
 }
 
 .next-btn {

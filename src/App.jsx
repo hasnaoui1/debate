@@ -8,6 +8,7 @@ import {
   VideoOff,
   PhoneOff,
   ArrowRight,
+  AlertTriangle,
 } from "lucide-react";
 
 const SERVER_URL =
@@ -28,6 +29,7 @@ export default function App() {
 
   const [isVideoMuted, setIsVideoMuted] = useState(false);
   const [isAudioMuted, setIsAudioMuted] = useState(false);
+  const [showReportModal, setShowReportModal] = useState(false);
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
@@ -50,7 +52,10 @@ export default function App() {
   const getMedia = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
+        video: {
+          width: { ideal: 1080 },
+          height: { ideal: 1920 }
+        },
         audio: true,
       });
       setLocalStream(stream);
@@ -265,6 +270,16 @@ export default function App() {
     }
   };
 
+  const handleReportUser = () => {
+    if (socket && room) {
+      socket.emit("report", { room, peerId, reason: "Trolling or disrespect" });
+    }
+    setShowReportModal(true);
+    setTimeout(() => setShowReportModal(false), 3000);
+    // Optionally automatically skip to next person
+    // nextPerson();
+  };
+
   // Setup local video element whenever stream changes
   useEffect(() => {
     if (localVideoRef.current && localStream) {
@@ -275,7 +290,7 @@ export default function App() {
   return (
     <div className="app-container">
       <header className="header">
-        <div className="logo">Debatify.</div>
+        <div className="logo">TruthTalk.</div>
       </header>
 
       {step === "setup" && (
@@ -366,6 +381,13 @@ export default function App() {
                   {isVideoMuted ? <VideoOff size={20} /> : <Video size={20} />}
                 </button>
                 <button
+                  className="control-btn warning"
+                  onClick={handleReportUser}
+                  title="Report User (Trolling/Disrespect)"
+                >
+                  <AlertTriangle size={20} />
+                </button>
+                <button
                   className="control-btn danger"
                   onClick={endChat}
                   title="End Chat"
@@ -376,6 +398,12 @@ export default function App() {
                   Skip <ArrowRight size={18} />
                 </button>
               </div>
+              
+              {showReportModal && (
+                <div className="toast-notification">
+                  User reported successfully.
+                </div>
+              )}
             </div>
           </div>
 
