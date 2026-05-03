@@ -30,6 +30,9 @@ export default function App() {
   const [isVideoMuted, setIsVideoMuted] = useState(false);
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
+  const [useCamera, setUseCamera] = useState(true);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const [reportReason, setReportReason] = useState("");
 
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
@@ -51,17 +54,21 @@ export default function App() {
   // Request media permissions
   const getMedia = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: {
+      const constraints = { audio: true };
+      if (useCamera) {
+        constraints.video = {
           width: { ideal: 1080 },
           height: { ideal: 1920 }
-        },
-        audio: true,
-      });
+        };
+      } else {
+        constraints.video = false;
+      }
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       setLocalStream(stream);
       if (localVideoRef.current) {
         localVideoRef.current.srcObject = stream;
       }
+      setIsVideoMuted(!useCamera);
       return stream;
     } catch (err) {
       console.error("Failed to get local stream", err);
@@ -257,9 +264,14 @@ export default function App() {
   };
 
   const toggleVideo = () => {
-    if (localStream) {
-      localStream.getVideoTracks()[0].enabled = isVideoMuted;
-      setIsVideoMuted(!isVideoMuted);
+    if (localStream && useCamera) {
+      const videoTrack = localStream.getVideoTracks()[0];
+      if (videoTrack) {
+        videoTrack.enabled = isVideoMuted;
+        setIsVideoMuted(!isVideoMuted);
+      }
+    } else if (!useCamera) {
+      alert("Camera was disabled before joining. Return to home to enable it.");
     }
   };
 
@@ -271,13 +283,23 @@ export default function App() {
   };
 
   const handleReportUser = () => {
-    if (socket && room) {
-      socket.emit("report", { room, peerId, reason: "Trolling or disrespect" });
+    setReportDialogOpen(true);
+  };
+
+  const submitReport = (e) => {
+    e.preventDefault();
+    if (socket && room && reportReason) {
+      socket.emit("report", { room, peerId, reason: reportReason });
     }
+    setReportDialogOpen(false);
     setShowReportModal(true);
     setTimeout(() => setShowReportModal(false), 3000);
-    // Optionally automatically skip to next person
-    // nextPerson();
+    setReportReason("");
+  };
+
+  const goHome = () => {
+    cleanupConnection();
+    setStep("setup");
   };
 
   // Setup local video element whenever stream changes
@@ -290,7 +312,7 @@ export default function App() {
   return (
     <div className="app-container">
       <header className="header">
-        <div className="logo">TruthTalk.</div>
+        <div className="logo" onClick={goHome} style={{ cursor: "pointer" }}>TruthTalk.</div>
       </header>
 
       {step === "setup" && (
@@ -332,6 +354,19 @@ export default function App() {
                 <option value="French">French</option>
                 <option value="Spanish">Spanish</option>
               </select>
+            </div>
+
+            <div className="form-group" style={{ flexDirection: "row", alignItems: "center", gap: "10px", marginTop: "10px" }}>
+              <input 
+                type="checkbox" 
+                id="camera-toggle"
+                checked={useCamera}
+                onChange={(e) => setUseCamera(e.target.checked)}
+                style={{ width: "20px", height: "20px", cursor: "pointer" }}
+              />
+              <label htmlFor="camera-toggle" style={{ margin: 0, textTransform: "none", fontSize: "16px", cursor: "pointer", color: "var(--text-main)" }}>
+                Enable Camera
+              </label>
             </div>
 
             <button className="primary-btn" onClick={startSearching}>
@@ -402,6 +437,36 @@ export default function App() {
               {showReportModal && (
                 <div className="toast-notification">
                   User reported successfully.
+                </div>
+              )}
+
+              {reportDialogOpen && (
+                <div className="modal-overlay">
+                  <div className="modal-content glass-panel report-modal">
+                    <h3 style={{ marginBottom: "10px" }}>Report User</h3>
+                    <p style={{ color: "var(--text-muted)", marginBottom: "20px" }}>Why are you reporting this user?</p>
+                    <form onSubmit={submitReport}>
+                      <div className="report-options" style={{ display: "flex", flexDirection: "column", gap: "12px", marginBottom: "25px" }}>
+                        {['Trolling / Not Serious', 'Disrespectful / Hate Speech', 'Inappropriate Content', 'Spam'].map(reason => (
+                          <label key={reason} className="report-option" style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer" }}>
+                            <input 
+                              type="radio" 
+                              name="reportReason" 
+                              value={reason} 
+                              checked={reportReason === reason} 
+                              onChange={(e) => setReportReason(e.target.value)} 
+                              style={{ width: "18px", height: "18px", cursor: "pointer" }}
+                            />
+                            {reason}
+                          </label>
+                        ))}
+                      </div>
+                      <div className="modal-actions" style={{ display: "flex", justifyContent: "flex-end", gap: "10px" }}>
+                        <button type="button" className="cancel-btn" style={{ padding: "10px 20px" }} onClick={() => setReportDialogOpen(false)}>Cancel</button>
+                        <button type="submit" className="primary-btn" style={{ padding: "10px 20px", marginTop: "0" }} disabled={!reportReason}>Submit Report</button>
+                      </div>
+                    </form>
+                  </div>
                 </div>
               )}
             </div>

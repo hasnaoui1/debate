@@ -398,6 +398,29 @@ button {
   to { top: 40px; opacity: 1; }
 }
 
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.report-modal {
+  padding: 30px;
+  width: 90%;
+  max-width: 450px;
+  background: rgba(15, 15, 25, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+}
+
 .next-btn {
   background: #3f37c9;
   color: white;
